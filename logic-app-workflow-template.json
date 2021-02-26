@@ -1,0 +1,95 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workflow_name": {
+            "type": "String"
+        },
+        "function_1_ref": {
+            "type": "String"
+        },
+        "function_2_ref": {
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('workflow_name')]",
+            "location": "centralus",
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "triggers": {
+                        "manual": {
+                            "type": "Request",
+                            "kind": "Http",
+                            "inputs": {
+                                "method": "POST",
+                                "schema": {
+                                    "lastname": "Snow",
+                                    "name": "John"
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "additional_message": {
+                            "runAfter": {
+                                "make_greeting_message": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Function",
+                            "inputs": {
+                                "body": "@body('make_greeting_message')",
+                                "function": {
+                                    "id": "[concat(parameters('function_2_ref'), '/functions/additional_message')]"
+                                }
+                            }
+                        },
+                        "make_greeting_message": {
+                            "runAfter": {},
+                            "type": "Function",
+                            "inputs": {
+                                "body": "@triggerBody()",
+                                "function": {
+                                    "id": "[concat(parameters('function_1_ref'), '/functions/make_greeting_message')]"
+                                },
+                                "headers": {
+                                    "Content-Type": "application/json"
+                                },
+                                "method": "POST"
+                            }
+                        },
+                        "say_hello": {
+                            "runAfter": {
+                                "additional_message": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Response",
+                            "kind": "Http",
+                            "inputs": {
+                                "body": "@body('additional_message')",
+                                "statusCode": 200
+                            }
+                        }
+                    },
+                    "outputs": {
+                        "webHookURI": {
+                            "type": "string",
+                            "value": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows/', parameters('workflow_name')), '/triggers/manual'), '2016-06-01').value]"
+                        }
+                    }
+                },
+                "parameters": {}
+            }
+        }
+    ]
+}
