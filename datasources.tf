@@ -29,9 +29,3 @@ data "azurerm_storage_account_sas" "sas" {
 
 # Get current subscription
 data "azurerm_subscription" "current" {}
-
-# Get logic app workflow by name
-data "azurerm_logic_app_workflow" "current" {
-  name                = "${var.prefix}-workflow-${var.environment}"
-  resource_group_name = azurerm_resource_group.rg.name
-}
