@@ -101,14 +101,98 @@ resource "azurerm_function_app" "function2" {
   }
 }
 
-locals {
-  functions_resource_group_id = "${data.azurerm_subscription.current.id}/resourceGroups/${azurerm_resource_group.rg.name}/providers/Microsoft.Web/sites"
-}
-
+# Create logic app workflow deployment
 resource "azurerm_logic_app_workflow" "logic_app" {
-  name                = "${var.prefix}-deployment-template-${var.environment}"
+  name                = "${var.prefix}-flow-${var.environment}"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
+}
 
-  parameters = {}
+# Create trigger http request
+resource "azurerm_logic_app_trigger_http_request" "http_trigger" {
+  name         = "http-trigger"
+  logic_app_id = azurerm_logic_app_workflow.logic_app.id
+  method       = "POST"
+
+  schema = <<SCHEMA
+{
+  "lastname": "Snow",
+  "name": "John"
+}
+SCHEMA
+
+}
+
+# Function App 1 - make_greeting_message
+resource "azurerm_logic_app_action_custom" "make_greeting_message" {
+  name         = "function_1_make_greeting_message"
+  logic_app_id = azurerm_logic_app_workflow.logic_app.id
+
+  body = <<BODY
+{
+    "description": "",
+    "inputs": {
+      "body": "@triggerBody()",
+      "function": {
+        "id": "${azurerm_function_app.function1.id}/functions/make_greeting_message"
+      },
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "method": "POST"
+    },
+    "runAfter": {},
+    "type": "Function"
+}
+BODY
+
+}
+
+# Function App 2 - additional_message
+resource "azurerm_logic_app_action_custom" "additional_message" {
+  name         = "function_2_additional_message"
+  logic_app_id = azurerm_logic_app_workflow.logic_app.id
+
+  body = <<BODY
+{
+    "description": "",
+    "inputs": {
+      "body": "@body('${azurerm_logic_app_action_custom.make_greeting_message.name}')",
+      "function": {
+        "id": "${azurerm_function_app.function2.id}/functions/additional_message"
+      }
+    },
+    "runAfter": {
+      "${azurerm_logic_app_action_custom.make_greeting_message.name}": [
+        "Succeeded"
+      ]
+    },
+    "type": "Function"
+}
+BODY
+
+}
+
+# Logic apps response
+resource "azurerm_logic_app_action_custom" "logic_app_response" {
+  name         = "response"
+  logic_app_id = azurerm_logic_app_workflow.logic_app.id
+
+  body = <<BODY
+{
+    "description": "",
+    "inputs": {
+      "body": "@body('${azurerm_logic_app_action_custom.additional_message.name}')",
+      "statusCode": 200
+    },
+    "runAfter": {
+      "${azurerm_logic_app_action_custom.additional_message.name}": [
+        "Succeeded"
+      ]
+    },
+    "type": "Response",
+    "kind": "http"
+}
+BODY
+
 }

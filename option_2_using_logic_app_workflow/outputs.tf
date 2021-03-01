@@ -1,3 +1,3 @@
-# output "logic_app_workflow_access_endpoint" {
-#   value = jsondecode(azurerm_resource_group_template_deployment.logic_app.output_content).logicAppUrl.value
-# }
+output "access_endpoint" {
+  value = azurerm_logic_app_trigger_http_request.outputs
+}
