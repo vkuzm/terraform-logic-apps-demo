@@ -14,7 +14,10 @@ export ARM_TENANT_ID="<tenant>"
 ```
 
 ## Step 3
-Run command ```terraform apply``` to deploy
+Run command ```terraform init``` to set up a required provider 
 
 ## Step 4
+Run command ```terraform apply``` to deploy
+
+## Step 5
 Run command ```terraform destroy``` to destroy deployment
