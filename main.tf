@@ -109,11 +109,12 @@ locals {
 resource "azurerm_resource_group_template_deployment" "logic_app" {
   name                = "${var.prefix}-deployment-template-${var.environment}"
   resource_group_name = azurerm_resource_group.rg.name
-  template_content    = file("logic-app-workflow-template.json")
+  template_content    = file(var.workflow_template_file)
+  deployment_mode     = "Incremental"
+
   parameters_content = jsonencode({
     workflow_name  = { value = "${var.prefix}-workflow-${var.environment}" },
     function_1_ref = { value = "${local.functions_resource_group_id}/${azurerm_function_app.function1.name}" },
     function_2_ref = { value = "${local.functions_resource_group_id}/${azurerm_function_app.function2.name}" },
   })
-  deployment_mode = "Incremental"
 }

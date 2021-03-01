@@ -5,10 +5,10 @@
         "workflow_name": {
             "type": "String"
         },
-        "function_1_ref": {
+        "function_2_ref": {
             "type": "String"
         },
-        "function_2_ref": {
+        "function_1_ref": {
             "type": "String"
         }
     },
@@ -81,15 +81,16 @@
                             }
                         }
                     },
-                    "outputs": {
-                        "web_hook_url": {
-                            "type": "string",
-                            "value": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows/', parameters('workflow_name')), '/triggers/manual'), '2016-06-01').value]"
-                        }
-                    }
+                    "outputs": {}
                 },
                 "parameters": {}
             }
         }
-    ]
+    ],
+    "outputs": {
+        "logicAppUrl": {
+            "type": "string",
+            "value": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows/', parameters('workflow_name')), '/triggers/manual'), '2016-06-01').value]"
+        }
+    }
 }
